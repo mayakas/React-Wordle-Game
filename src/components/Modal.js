@@ -13,8 +13,10 @@ export default function Modal({ turn, isCorrect, modalRemover, solution }) {
     <div className="modal">
       {isCorrect && (
         <div>
-          <h1>Congratulations !! You Won.</h1>
-          <p className="solution">The Solution is : {solution}</p>
+          <h1>Congratulations </h1>
+          <p className="te">!! You Won.</p>
+          <p className="te">The Solution is : {solution}</p>
+          <p className="te">!! You Won.</p>
           <p>You got is correct after {turn} guesses</p>
         </div>
       )}
@@ -22,7 +24,7 @@ export default function Modal({ turn, isCorrect, modalRemover, solution }) {
         <div>
           <h1>Nevermind !!</h1>
           <p className="solution">The Solution is : {solution}</p>
-          <p>All the best next time !</p>
+          <p className="te">All the best next time !</p>
         </div>
       )}
     </div>
