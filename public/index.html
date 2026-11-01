@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#ffffff" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Guess the hidden five-letter word in six tries."
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
@@ -24,7 +24,31 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700&family=Zilla+Slab:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Wordle</title>
+    <script>
+      // Pick the theme before the page is drawn so dark mode doesn't flash white.
+      // A saved choice from the settings switch wins, otherwise follow the device.
+      (function () {
+        var theme;
+        try {
+          theme = localStorage.getItem("wordle-theme");
+        } catch (e) {}
+        if (theme !== "dark" && theme !== "light") {
+          theme =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

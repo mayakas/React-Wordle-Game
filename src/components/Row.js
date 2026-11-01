@@ -1,12 +1,19 @@
 import React from "react";
 
-export default function Row({ guess, currentGuess }) {
+export default function Row({ guess, currentGuess, shake }) {
+  // A SUBMITTED GUESS: COLORED TILES THAT FLIP OVER ONE BY ONE
   if (guess) {
+    const isWin = guess.every((letter) => letter.color === "green");
+
     return (
-      <div className="row past">
+      <div className={isWin ? "row win" : "row"}>
         {guess.map((letter, index) => {
           return (
-            <div className={letter.color} key={index}>
+            <div
+              className={`tile ${letter.color}`}
+              style={{ "--i": index }}
+              key={index}
+            >
               {letter.key}
             </div>
           );
@@ -15,32 +22,18 @@ export default function Row({ guess, currentGuess }) {
     );
   }
 
-  if (currentGuess) {
-    let letters = currentGuess.split("");
-    console.log(letters);
-    return (
-      <div className="row current">
-        {letters.map((value, index) => {
-          return (
-            <div className="filled" key={index}>
-              {value}
-            </div>
-          );
-        })}
-        {[...Array(5 - letters.length)].map((v, i) => {
-          return <div key={i}></div>;
-        })}
-      </div>
-    );
-  }
+  // THE ROW BEING TYPED IN, OR AN EMPTY ROW
+  const letters = currentGuess ? currentGuess.split("") : [];
 
   return (
-    <div className="row">
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
+    <div className={shake ? "row shake" : "row"}>
+      {[...Array(5)].map((v, index) => {
+        return (
+          <div className={letters[index] ? "tile filled" : "tile"} key={index}>
+            {letters[index]}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -1,32 +1,49 @@
-import { click } from "@testing-library/user-event/dist/click";
-import React, { useEffect } from "react";
+import React from "react";
+import { CloseIcon } from "./Icons";
 
 export default function Modal({ turn, isCorrect, modalRemover, solution }) {
-  useEffect(() => {
-    window.addEventListener("click", modalRemover);
-    return () => {
-      window.removeEventListener(("click", modalRemover));
-    };
-  }, []);
-
   return (
-    <div className="modal">
-      {isCorrect && (
-        <div>
-          <h1>Congratulations </h1>
-          <p className="te">!! You Won.</p>
-          <p className="te">The Solution is : {solution}</p>
-          <p className="te">!! You Won.</p>
-          <p>You got is correct after {turn} guesses</p>
+    // clicking outside the card, the close button or "Next word" starts the next game
+    <div className="modal-overlay" onClick={modalRemover}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="modal-close"
+          aria-label="close"
+          onClick={modalRemover}
+        >
+          <CloseIcon />
+        </button>
+
+        {isCorrect ? (
+          <>
+            <h2>Congratulations!</h2>
+            <p>
+              You found the word in {turn} {turn === 1 ? "guess" : "guesses"}.
+            </p>
+          </>
+        ) : (
+          <>
+            <h2>Better luck next time</h2>
+            <p>The word was</p>
+          </>
+        )}
+
+        <div className="modal-word">
+          {[...solution].map((letter, index) => {
+            return <span key={index}>{letter}</span>;
+          })}
         </div>
-      )}
-      {!isCorrect && (
-        <div>
-          <h1>Nevermind !!</h1>
-          <p className="solution">The Solution is : {solution}</p>
-          <p className="te">All the best next time !</p>
-        </div>
-      )}
+
+        <button type="button" className="modal-button" onClick={modalRemover}>
+          Next word
+        </button>
+      </div>
     </div>
   );
 }

@@ -2,11 +2,39 @@ import { useState } from "react";
 import { useEffect } from "react";
 import "./App.css";
 import Header from "./components/Header";
+import Settings from "./components/Settings";
 import Wordle from "./components/Wordle";
 
 function App() {
   const [solution, setSolution] = useState(null);
   const [solutionArray, setSolutionArray] = useState([]);
+  const [showSettings, setShowSettings] = useState(false);
+  // the starting theme is picked by the script in public/index.html
+  const [darkMode, setDarkMode] = useState(
+    document.documentElement.getAttribute("data-theme") === "dark"
+  );
+
+  // APPLY THE THEME TO THE PAGE (and the browser bar color on phones)
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-theme",
+      darkMode ? "dark" : "light"
+    );
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", darkMode ? "#121213" : "#ffffff");
+  }, [darkMode]);
+
+  // FLIP THE THEME AND REMEMBER THE CHOICE FOR NEXT TIME
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    try {
+      localStorage.setItem("wordle-theme", newDarkMode ? "dark" : "light");
+    } catch (e) {
+      // storage can be blocked (e.g. private browsing); the switch still works for this visit
+    }
+  };
 
   useEffect(() => {
     fetch("http://localhost:3001/solutions")
@@ -21,11 +49,34 @@ function App() {
       });
   }, [setSolution]);
 
+  // PICK A DIFFERENT RANDOM WORD FOR THE NEXT GAME
+  const nextWord = () => {
+    const others = solutionArray.filter((item) => item.word !== solution);
+    let random = Math.floor(Math.random() * others.length);
+    setSolution(others[random].word);
+  };
+
   return (
     <div className="App">
       {/* <h1 className="wtitle">Wordle</h1> */}
-      <Header />
-      <h2>{solution && <Wordle solution={solution} arr={solutionArray} />}</h2>
+      <Header onOpenSettings={() => setShowSettings(true)} />
+      {/* key={solution} gives every new word a fresh board, guesses and keypad */}
+      {solution && (
+        <Wordle
+          key={solution}
+          solution={solution}
+          arr={solutionArray}
+          onNextWord={nextWord}
+          paused={showSettings}
+        />
+      )}
+      {showSettings && (
+        <Settings
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   );
 }

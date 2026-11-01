@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const useWordle = (solution) => {
+const useWordle = (solution, onInvalid) => {
   //STATES
   const [turn, setTurn] = useState(0);
   const [currentGuess, setCurrentGuess] = useState("");
@@ -62,7 +62,7 @@ const useWordle = (solution) => {
     setUsedKeys((prevUsedKeys) => {
       let newKeys = { ...prevUsedKeys };
 
-      formattedGuess.map((letter) => {
+      formattedGuess.forEach((letter) => {
         let currentColor = newKeys[letter.key];
         if (letter.color === "green") {
           newKeys[letter.key] = "green";
@@ -103,12 +103,13 @@ const useWordle = (solution) => {
       //check for already typed guess
       if (history.includes(currentGuess)) {
         console.log("Word already guessed.");
+        onInvalid("Already guessed");
         return;
       }
       //check for length of the word
       if (currentGuess.length !== 5) {
         console.log("Word should have 5 characters");
-        // setCurrentGuess("");
+        onInvalid("Not enough letters");
         return;
       }
 

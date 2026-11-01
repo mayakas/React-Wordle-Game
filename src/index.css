@@ -1,171 +1,490 @@
-body {
-  text-align: center;
-  font-size: 1em;
-  font-family: Arial, Helvetica, sans-serif, Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  height: 100%;
-}
-h1 {
-  font-size: 1.2em;
-  padding: 15px 0;
-  border-bottom: 1px solid #eee;
-  margin: 0 0 5px 0;
-  color: #333;
+/* COLORS AND TIMINGS (MATCHING THE NYT WORDLE LIGHT THEME) */
+:root {
+  --bg: #ffffff;
+  --green: #6aaa64;
+  --yellow: #c9b458;
+  --grey: #787c7e;
+  --text: #1a1a1b;
+  --border: #d3d6da;
+  --tile-border: #d3d6da;
+  --tile-filled-border: #878a8c;
+  --key-bg: #d3d6da;
+  --overlay: rgba(255, 255, 255, 0.5);
+  --modal-border: #f6f7f8;
+  --switch-off: #878a8c;
+  /* keep in sync with REVEAL_TIME in Wordle.js */
+  --reveal-time: 1.7s;
+  --title-font: "Zilla Slab", Georgia, "Times New Roman", serif;
 }
 
-/* rows */
-.row {
-  font-size: 0.5em;
+/* NYT WORDLE DARK THEME (turned on from the settings switch) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121213;
+  --green: #538d4e;
+  --yellow: #b59f3b;
+  --grey: #3a3a3c;
+  --text: #ffffff;
+  --border: #3a3a3c;
+  --tile-border: #3a3a3c;
+  --tile-filled-border: #565758;
+  --key-bg: #818384;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --modal-border: #1a1a1b;
+  --switch-off: #565758;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* PAGE LAYOUT: HEADER ON TOP, BOARD IN THE MIDDLE, KEYBOARD AT THE BOTTOM */
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
   text-align: center;
+}
+
+.header {
+  position: relative;
+  flex-shrink: 0;
+  height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--title-font);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.header-button {
+  position: absolute;
+  right: 16px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  display: flex;
+  cursor: pointer;
+}
+
+.game {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* BOARD */
+.board-container {
+  flex: 1;
+  min-height: 0;
   display: flex;
   justify-content: center;
+  align-items: center;
+  padding: 10px;
+  container-type: size;
 }
-.row > div {
-  display: block;
-  width: 60px;
-  height: 60px;
-  border: 1px solid #bbb;
-  margin: 4px;
-  text-align: center;
-  line-height: 60px;
+
+.board {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  gap: 5px;
+  /* 350 x 420 like NYT, shrinking to fit small screens */
+  width: min(350px, 100cqw, 100cqh * 5 / 6);
+  aspect-ratio: 5 / 6;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.tile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--tile-border);
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
   text-transform: uppercase;
-  font-weight: bold;
-  font-size: 2.5em;
+  user-select: none;
 }
 
-.row > div.green {
-  --background: #6aaa64;
-  --border-color: #6aaa64;
-  animation: flip 0.5s ease forwards;
-}
-.row > div.grey {
-  --background: #a1a1a1;
-  --border-color: #a1a1a1;
-  animation: flip 0.5s ease forwards;
-}
-.row > div.yellow {
-  --background: #e2cc68;
-  --border-color: #e2cc68;
-  animation: flip 0.5s ease forwards;
+/* a letter that has been typed but not submitted */
+.tile.filled {
+  border-color: var(--tile-filled-border);
+  animation: pop 100ms ease-in-out;
 }
 
-.row > div:nth-child(2) {
-  animation-delay: 0.2s;
+/* submitted letters flip over one after the other */
+.tile.green {
+  --tile-color: var(--green);
 }
-.row > div:nth-child(3) {
-  animation-delay: 0.4s;
+.tile.yellow {
+  --tile-color: var(--yellow);
 }
-.row > div:nth-child(4) {
-  animation-delay: 0.6s;
+.tile.grey {
+  --tile-color: var(--grey);
 }
-.row > div:nth-child(5) {
-  animation-delay: 0.8s;
+.tile.green,
+.tile.yellow,
+.tile.grey {
+  background: var(--tile-color);
+  border-color: var(--tile-color);
+  color: #fff;
+  animation: flip 500ms ease-in calc(var(--i) * 300ms) both;
 }
 
-.row.current > div.filled {
-  animation: bounce 0.2s forwards ease-in-out;
+/* the winning row does a little jump once all tiles have flipped */
+.row.win > .tile {
+  animation: flip 500ms ease-in calc(var(--i) * 300ms) both,
+    bounce 1000ms ease calc(var(--reveal-time) + var(--i) * 100ms);
 }
 
+/* the row wiggles when a guess is not accepted */
+.row.shake {
+  animation: shake 600ms;
+}
+
+/* KEYBOARD */
 .keypad {
-  max-width: 500px;
-  max-height: 250px;
-  margin: 10px auto;
-}
-.keypad > div {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  text-transform: uppercase;
-  margin: 5px;
-  width: 40px;
-  height: 45px;
-  background: #d3d6da;
-  display: inline-block;
-  border-radius: 2px;
-  line-height: 45px;
+  width: 100%;
+  padding: 0 8px 8px;
+  user-select: none;
 }
 
-.keypad > div.green {
-  background: #6aaa64;
-  color: #fff;
-  transition: all 0.3s ease-in;
+.keypad-row {
+  display: flex;
+  width: 100%;
+  margin: 0 auto 8px;
+  touch-action: manipulation;
 }
-.keypad > div.yellow {
-  background: #e2cc68;
-  color: #fff;
-  transition: all 0.3s ease-in;
+
+.keypad-spacer {
+  flex: 0.5;
 }
-.keypad > div.grey {
-  background: #a1a1a1;
+
+.key {
+  flex: 1;
+  height: 58px;
+  margin: 0 6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--key-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1.25em;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.3);
+}
+
+.key:last-of-type {
+  margin: 0;
+}
+
+.key.wide {
+  flex: 1.5;
+  font-size: 12px;
+}
+
+.key.green {
+  background: var(--green);
   color: #fff;
-  transition: all 0.3s ease-in;
+}
+.key.yellow {
+  background: var(--yellow);
+  color: #fff;
+}
+.key.grey {
+  background: var(--grey);
+  color: #fff;
+}
+
+/* TOAST MESSAGES ("Not enough letters", "Splendid", ...) */
+.toast {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 16px;
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 16px;
+  pointer-events: none;
+}
+
+/* END OF GAME MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--overlay);
+}
+
+.modal {
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  padding: 48px 16px 32px;
+  border: 1px solid var(--modal-border);
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: 0 4px 23px 0 rgba(0, 0, 0, 0.2);
+  animation: slide-in 200ms ease-out;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modal h2 {
+  margin: 0 0 8px;
+  font-family: var(--title-font);
+  font-size: 32px;
+}
+
+.modal p {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-word {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 20px 0 28px;
+}
+
+.modal-word span {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--green);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modal-button {
+  height: 48px;
+  padding: 0 40px;
+  border: 0;
+  border-radius: 104px;
+  background: var(--green);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* SETTINGS PANEL */
+.modal.settings {
+  padding: 16px 32px 32px;
+  text-align: left;
+}
+
+.modal.settings h2 {
+  margin: 4px 0 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-name {
+  font-size: 18px;
+}
+
+/* NYT-STYLE ON / OFF SWITCH */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--switch-off);
+  cursor: pointer;
+}
+
+.switch .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 300ms;
+}
+
+.switch[aria-checked="true"] {
+  background: var(--green);
+}
+
+.switch[aria-checked="true"] .knob {
+  transform: translateX(12px);
+}
+
+/* ANIMATIONS */
+@keyframes pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 
 @keyframes flip {
   0% {
     transform: rotateX(0);
-    background: #eee;
-    border-color: #333;
+    background: var(--bg);
+    border-color: var(--tile-filled-border);
+    color: var(--text);
   }
-  45% {
-    transform: rotateX(90deg);
-    background: #eee;
-    border-color: #333;
+  49.9% {
+    background: var(--bg);
+    border-color: var(--tile-filled-border);
+    color: var(--text);
   }
-  55% {
-    transform: rotateX(90deg);
-    background: var(--background);
-    border-color: var(var(--border-color));
+  50% {
+    transform: rotateX(-90deg);
+    background: var(--tile-color);
+    border-color: var(--tile-color);
+    color: #fff;
   }
   100% {
     transform: rotateX(0);
-    background: var(--background);
-    border-color: var(--border-color);
-    color: #eee;
+    background: var(--tile-color);
+    border-color: var(--tile-color);
+    color: #fff;
   }
-}
-
-.modal {
-  background: rgba(0, 0, 0, 0.7);
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-.modal div {
-  max-width: 360px;
-  height: 300px;
-  background: #fff;
-  padding: 40px;
-  border-radius: 10px;
-  margin: 5% auto;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-}
-.modal .solution {
-  color: #ff004c;
-  font-weight: bold;
-  font-size: 0.8em;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.modal .te {
-  margin-left: 20px;
-  text-align: left;
-  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-  font-size: 15px;
-
 }
 
 @keyframes bounce {
-  0% {
-    transform: scale(1);
-    border-color: #ddd;
+  0%,
+  20% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-30px);
   }
   50% {
-    transform: scale(1.2);
+    transform: translateY(5px);
+  }
+  60% {
+    transform: translateY(-15px);
+  }
+  80% {
+    transform: translateY(2px);
   }
   100% {
-    transform: scale(1);
-    border-color: #333;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes slide-in {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .row,
+  .modal {
+    animation: none !important;
+  }
+  .switch .knob {
+    transition: none;
   }
 }
